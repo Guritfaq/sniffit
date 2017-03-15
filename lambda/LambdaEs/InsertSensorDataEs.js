@@ -1,16 +1,8 @@
 'use strict';
 var AWS = require('aws-sdk');
-var path = require('path');
-var elasticsearch = require('elasticsearch');
-var http_aws_es = require('http-aws-es');
-var converter = require('aws-sdk/lib/dynamodb/converter.js');
+var common = require('./EsCommon.js');
 var docClient = new AWS.DynamoDB.DocumentClient();
 var table = 'sensor_data'
-var esDomain = {
-    region: 'us-west-2',
-    endpoint: 'search-monitoring-6c3m7xjtgbissriuef644ue2ae.us-west-2.es.amazonaws.com',
-    index: table//, doctype: 'apache'
-};
 
 var temp ;
 var lat ;
@@ -21,7 +13,6 @@ var speed;
 var device_id ;
 var timestamp ;
 var battery ;
-var endpoint = new AWS.Endpoint(esDomain.endpoint);
 var dynamodb = new AWS.DynamoDB();
 var datetime = new Date().getTime().toString();
 var client_id ;
@@ -43,19 +34,6 @@ GetClient_Device_Map(vendor_device_id,hardware_vendor,context);
 
 };
 
-var createIndex = function(es, table, callback) {
-  console.log('createIndex', table);
-  es.indices.create({
-    index: table
-  }, function(err, response, status){
-    if (err) {
-      console.log("Index could not be created", err, response, status);
-    } else {
-      console.log("Index has been created");
-    }
-  });
-
-};
 function GetJob(client_id,device_id,context)
 {
   var params = {
@@ -99,84 +77,52 @@ docClient.query(params, function(err, data) {
               data.Items.forEach(function(item) {
               client_id = item.client_id;
               device_id = item.device_uid;
-
-              id = client_id + job_id + device_id + String(timestamp);
+              timestamp = new Date(timestamp).toISOString()
+              id = client_id + job_id + device_id + timestamp;
               console.log('id ' + id);
               var paramsES = {
                               "client_id": {
-                                  "S": "C001"
+                                  "S": client_id
                               },
                               "client_id_job_id_device_id": {
                                   "S":  "C001J001D001" //event.client_id_job_id_device_id
                               },
+                              "job_id": {
+                                    "S": "J002"
+                                },
+                                "device_id": {
+                                    "S": device_id
+                                },
                               "read_time": {
-                                  "S": String(timestamp)
+                                  "S": timestamp
                               },
                               "location": {
-                                  "S":  lat +  "," + long    //event.location
+                                  "S":  lat +  "," + long
                               },
                               "temp": {
-                                  "S": String(temp)
+                                  "N": temp
                               },
-                              "job_id": {
-                                  "S": "J002"
+                              "battery": {
+                                  "N": battery
                               },
-                              "device_id": {
-                                  "S": device_id
+                              "speed": {
+                                  "N": speed
+                              },
+                              "humidity": {
+                                  "N": humidity
                               }
-
-
                           };
                       paramsES =  JSON.stringify(paramsES, null, 2);
                       console.log('paramsES ' + paramsES);
-              postToES(paramsES,id,context);
+                      common.SendToEs('sensor_data','sensor_reading',paramsES,id,"INSERT",context);
+
 
             });
             }
  });
  }
-function postToES(doc,id, context) {
-  var myCredentials = new AWS.EnvironmentCredentials('AWS');
-  var es = elasticsearch.Client({
-        hosts: esDomain.endpoint,
-        connectionClass: http_aws_es,
-        amazonES: {
-          region: esDomain.region,
-          credentials: myCredentials
-        }
-
-      });
-
-      es.indices.exists({
-        index: table
-      },function(err, response, status){
-        console.log('Looking for Index');
-        console.log(err, response, status);
-        if (status == 200) {
-          console.log('Index Exists');
-        //  resolve({es: es, domain: esDomain});
-        } else if (status == 404) {
-          createIndex(es, table, function(){
-          //  resolve({es: es, domain: esDomain});
-          });
-        } else {
-          console.log("status" +  status);
-        }
-      });
 
 
-    es.index({
-          index: table,
-          type: 'client_id',
-          id: id,
-          body: doc,
-          refresh: true
-        }, function (error, response) {
-          context.succeed('Lambda added document ' + doc);
-          console.log(response);
-          console.log(error);
-});
-}
 function traverse(o) {
 
     for (var i in o)
