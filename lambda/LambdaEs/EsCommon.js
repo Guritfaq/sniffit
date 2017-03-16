@@ -8,10 +8,11 @@ var esDomain = {
   //  index: 'job'//, doctype: 'apache'
 };
 
-var createIndex = function(es, table, callback) {
+var createIndex = function(es, table, mapping,callback) {
   console.log('createIndex', table);
   es.indices.create({
-    index: table
+    index: table ,
+    body : mapping
   }, function(err, response, status){
     if (err) {
       console.log("Index could not be created", err, response, status);
@@ -21,7 +22,7 @@ var createIndex = function(es, table, callback) {
   });
 
 };
-function SendToEs(index,type,doc,id,eventname, context) {
+function SendToEs(index,type,mapping,doc,id,eventname, context) {
       var myCredentials = new AWS.EnvironmentCredentials('AWS');
   var es = elasticsearch.Client({
         hosts: esDomain.endpoint,
@@ -41,9 +42,9 @@ function SendToEs(index,type,doc,id,eventname, context) {
           console.log('Index Exists');
         //  resolve({es: es, domain: esDomain});
         } else if (status == 404) {
-          createIndex(es, index, function(){
-          //  resolve({es: es, domain: esDomain});
-          });
+          createIndex(es, index,mapping, function(){
+
+            });
         } else {
             console.log("status" +  status);
         }
@@ -66,7 +67,7 @@ else
 {
       es.index({
             index: index,
-            type: 'client_id',
+            type: type,
             id: id,
             body: doc,
             refresh: true

@@ -32,7 +32,7 @@ console.log(vendor_device_id);
 //timestamp = new Date().getTime().toString();
 GetClient_Device_Map(vendor_device_id,hardware_vendor,context);
 
-};
+}
 
 function GetJob(client_id,device_id,context)
 {
@@ -70,6 +70,7 @@ function GetClient_Device_Map(vendor_device_id,hardware_vendor,context)
                 ":hardware_vendor": hardware_vendor,":vendor_device_id": vendor_device_id
             }
         };
+        console.log(params);
 docClient.query(params, function(err, data) {
             if (err) {
                 context.fail('ERROR: Dynamo failed: ' + err);
@@ -77,44 +78,28 @@ docClient.query(params, function(err, data) {
               data.Items.forEach(function(item) {
               client_id = item.client_id;
               device_id = item.device_uid;
-              timestamp = new Date(timestamp).toISOString()
-              id = client_id + job_id + device_id + timestamp;
+              console.log(timestamp);
+              var ts = new Date(timestamp);
+              console.log(ts);
+              ts = ts.toISOString();
+              console.log(ts);
+              id = client_id + job_id + device_id + ts;
               console.log('id ' + id);
               var paramsES = {
-                              "client_id": {
-                                  "S": client_id
-                              },
-                              "client_id_job_id_device_id": {
-                                  "S":  "C001J001D001" //event.client_id_job_id_device_id
-                              },
-                              "job_id": {
-                                    "S": "J002"
-                                },
-                                "device_id": {
-                                    "S": device_id
-                                },
-                              "read_time": {
-                                  "S": timestamp
-                              },
-                              "location": {
-                                  "S":  lat +  "," + long
-                              },
-                              "temp": {
-                                  "N": temp
-                              },
-                              "battery": {
-                                  "N": battery
-                              },
-                              "speed": {
-                                  "N": speed
-                              },
-                              "humidity": {
-                                  "N": humidity
-                              }
+                              "client_id":  client_id,
+                              "client_id_job_id_device_id":  "C001J001D001" ,  //event.client_id_job_id_device_id,
+                              "job_id":  "J002",
+                              "device_id":  device_id,
+                              "read_time":  ts,
+                              "location":  lat + ',' + long ,
+                              "temp":  temp,
+                              "battery":  battery,
+                              "speed": speed,
+                              "humidity":  humidity
                           };
                       paramsES =  JSON.stringify(paramsES, null, 2);
                       console.log('paramsES ' + paramsES);
-                      common.SendToEs('sensor_data','sensor_reading',paramsES,id,"INSERT",context);
+                      common.SendToEs('sensor_data_new3','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
 
 
             });
@@ -174,3 +159,21 @@ switch(sense.sId) {
     }
 }
 }
+var sensor_datamapping = {"mappings": {
+    "sensor_data": {
+      "_all":       { "enabled": false  },
+      "properties": {
+        "client_id":    { "type": "text"  },
+        "client_id_job_id_device_id":     { "type": "text"  },
+        "job_id":      { "type": "text" },
+        "device_id":    { "type": "text"  },
+        "read_time":     { "type": "date" },
+        "location":      {  "type": "geo_point" },
+        "temp":    { "type": "double"  },
+        "battery":     { "type": "double"  },
+        "speed":      { "type": "double" } ,
+        "humidity":      { "type": "double" }
+      }
+    }
+  }
+};

@@ -1,4 +1,3 @@
-//var datetime = new Date().toISOString();
 var uuid = require('node-uuid');
 var password = require('password-hash-and-salt');
 //function abc() {
@@ -39,3 +38,28 @@ var password = require('password-hash-and-salt');
 
 //var d = new Date(1489528549428).toISOString()
 console.log(  password("admin"));
+
+
+var datetime = new Date(1489627553482).toISOString();
+
+console.log(datetime);
+
+
+// var datamapping = {"mappings": {
+//     "sensor_data": {
+//       "_all":       { "enabled": false  },
+//       "properties": {
+//         "client_id":    { "type": "text"  },
+//         "client_id_job_id_device_id":     { "type": "text"  },
+//         "job_id":      { "type": "text" },
+//         "device_id":    { "type": "text"  },
+//         "read_time":     { "type": "date" },
+//         "location":      {  "type": "geo_point" },
+//         "temp":    { "type": "double"  },
+//         "battery":     { "type": "double"  },
+//         "speed":      { "type": "double" } ,
+//         "humidity":      { "type": "double" }
+//       }
+//     }}};
+
+  //console.log(sensor_datamapping);

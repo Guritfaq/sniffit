@@ -31,12 +31,12 @@ var pwd;
             if(error)
                 console.log ('Something went wrong!');
             if(!verified) {
-                console.log("Login Failed");
+              context.succeed("Login Failed");
             } else {
-                console.log("Login successfull");
+              context.succeed("Login successfull");
             }
+
           });
-           context.succeed("success");
         }
     });
 

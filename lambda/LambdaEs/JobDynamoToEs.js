@@ -18,9 +18,29 @@ exports.handler = (event, context) => {
               var jsonDoc = JSON.stringify(outpt, null, 2);
               console.log('jsonDoc' + jsonDoc);
               record.dynamodb
-              common.SendToEs('job','client_id',jsonDoc,id,record.eventName,context);
+              common.SendToEs('sensor_data_new3','job',job_datamapping,jsonDoc,id,record.eventName,context);
     });
 
   //  callback(null, `Successfully processed ${event.Records.length} records.`);
 
+};
+
+var job_datamapping = {"mappings": {
+    "job": {
+      "_all":       { "enabled": false  },
+      "properties": {
+        "client_id":    { "type": "text"  },
+        "job_id":     { "type": "text"  },
+        "name":      { "type": "text" },
+        "type":    { "type": "text"  },
+        "desc":     { "type": "text" },
+        "source":      {  "type": "geo_point" },
+        "dest":    { "type": "geo_point"  },
+        "devices":     { "type": "object"  },
+        "status":      { "type": "text" } ,
+        "start_time":      { "type": "date" }
+        "end_time":      { "type": "date" }
+      }
+    }
+  }
 };
