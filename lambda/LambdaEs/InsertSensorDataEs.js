@@ -14,12 +14,10 @@ var device_id ;
 var timestamp ;
 var battery ;
 var dynamodb = new AWS.DynamoDB();
-var datetime = new Date().getTime().toString();
 var client_id ;
 var device_id ;
 var job_id = "J009";
 var id ;
-
 
 exports.handler = (event, context) => {
 console.log(event);
@@ -71,23 +69,22 @@ function GetClient_Device_Map(vendor_device_id,hardware_vendor,context)
             }
         };
         console.log(params);
-docClient.query(params, function(err, data) {
+        docClient.query(params, function(err, data) {
             if (err) {
+                console.log(err);
                 context.fail('ERROR: Dynamo failed: ' + err);
             } else {
               data.Items.forEach(function(item) {
               client_id = item.client_id;
               device_id = item.device_uid;
               console.log(timestamp);
-              var ts = new Date(timestamp);
-              console.log(ts);
-              ts = ts.toISOString();
+              var ts = new Date().toISOString();
               console.log(ts);
               id = client_id + job_id + device_id + ts;
               console.log('id ' + id);
               var paramsES = {
                               "client_id":  client_id,
-                              "client_id_job_id_device_id":  "C001J001D001" ,  //event.client_id_job_id_device_id,
+                            //  "client_id_job_id_device_id":  "C001J001D001" ,  //event.client_id_job_id_device_id,
                               "job_id":  "J002",
                               "device_id":  device_id,
                               "read_time":  ts,
@@ -99,11 +96,10 @@ docClient.query(params, function(err, data) {
                           };
                       paramsES =  JSON.stringify(paramsES, null, 2);
                       console.log('paramsES ' + paramsES);
-                      common.SendToEs('sensor_data_new3','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
-
+                      common.SendToEs('sniffitindex','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
 
             });
-            }
+      }
  });
  }
 
@@ -112,7 +108,6 @@ function traverse(o) {
 
     for (var i in o)
 {
-console.log(i);
         if (o[i] !== null && typeof(o[i])=="object")
 {
               if (i== "engine")
@@ -123,6 +118,7 @@ console.log(i);
                     if  (j == "ts")
                     {
                     timestamp = engine[j];
+                    console.log(timestamp);
                     break;
                     }
                   }
@@ -161,12 +157,12 @@ switch(sense.sId) {
 }
 var sensor_datamapping = {"mappings": {
     "sensor_data": {
-      "_all":       { "enabled": false  },
+      //"_all":       { "enabled": false  },
       "properties": {
-        "client_id":    { "type": "text"  },
-        "client_id_job_id_device_id":     { "type": "text"  },
-        "job_id":      { "type": "text" },
-        "device_id":    { "type": "text"  },
+        "client_id":    { "type": "keyword"  },
+      //  "client_id_job_id_device_id":     { "type": "text"  },
+        "job_id":      { "type": "keyword" },
+        "device_id":    { "type": "keyword"  },
         "read_time":     { "type": "date" },
         "location":      {  "type": "geo_point" },
         "temp":    { "type": "double"  },
@@ -176,4 +172,4 @@ var sensor_datamapping = {"mappings": {
       }
     }
   }
-};
+}

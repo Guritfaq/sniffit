@@ -1,5 +1,7 @@
-var uuid = require('node-uuid');
-var password = require('password-hash-and-salt');
+var sleep = require('sleep');
+
+// var uuid = require('node-uuid');
+// var password = require('password-hash-and-salt');
 //function abc() {
  // var totalCharacters = 39; // length of number hash; in this case 0-39 = 40 characters
  // var txtUuid = "";
@@ -15,19 +17,19 @@ var password = require('password-hash-and-salt');
  //
 
 
-
- function timeConverter(UNIX_timestamp){
-   var a = new Date(UNIX_timestamp * 1000);
-   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-   var year = a.getFullYear();
-   var month = months[a.getMonth()];
-   var date = a.getDate();
-   var hour = a.getHours();
-   var min = a.getMinutes();
-   var sec = a.getSeconds();
-   var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
-   return time;
- }
+ //
+ // function timeConverter(UNIX_timestamp){
+ //   var a = new Date(UNIX_timestamp * 1000);
+ //   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+ //   var year = a.getFullYear();
+ //   var month = months[a.getMonth()];
+ //   var date = a.getDate();
+ //   var hour = a.getHours();
+ //   var min = a.getMinutes();
+ //   var sec = a.getSeconds();
+ //   var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+ //   return time;
+ // }
 
 
  // var utcSeconds = 1489360297044;
@@ -37,10 +39,10 @@ var password = require('password-hash-and-salt');
 
 
 //var d = new Date(1489528549428).toISOString()
-console.log(  password("admin"));
+//console.log(  password("admin"));
 
 
-var datetime = new Date(1489627553482).toISOString();
+var datetime = new Date(1489360297044).toISOString();
 
 console.log(datetime);
 
@@ -63,3 +65,40 @@ console.log(datetime);
 //     }}};
 
   //console.log(sensor_datamapping);
+
+  //
+  // var searchparam ={"query": {
+  //       "match": {
+  //         "client_id": event.client_id
+  //       },
+  // 					"query_string": {
+  // 					 "query": event.searchtext
+  // 					}
+  // 				}};
+  //   console.log(searchparam);
+
+abc('event','context');
+
+function abc (event, context) {
+  console.log('before createjob');
+  createjob(event, context,createjobcallback(event,context));
+  console.log('after createjob');
+
+  }
+
+  function createjob(event, context,createjobcallback)
+  {
+    sleep.sleep(2);
+    console.log('inside createjob');
+  }
+
+  function createviolation(event,context)
+  {
+  console.log('createviolation');
+  }
+
+  function createjobcallback(event,context) {
+    console.log('inside createjobcallback');
+  createviolation(event,context);
+  //  createviolation(event,context);
+         }

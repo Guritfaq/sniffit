@@ -17,8 +17,7 @@ exports.handler = (event, context) => {
                var id = outpt.client_id + outpt.job_id;
               var jsonDoc = JSON.stringify(outpt, null, 2);
               console.log('jsonDoc' + jsonDoc);
-              record.dynamodb
-              common.SendToEs('sensor_data_new3','job',job_datamapping,jsonDoc,id,record.eventName,context);
+              common.SendToEs('sniffitindex','job',job_datamapping,jsonDoc,id,record.eventName,context);
     });
 
   //  callback(null, `Successfully processed ${event.Records.length} records.`);
@@ -27,18 +26,18 @@ exports.handler = (event, context) => {
 
 var job_datamapping = {"mappings": {
     "job": {
-      "_all":       { "enabled": false  },
+      //"_all":       { "enabled": false  },
       "properties": {
-        "client_id":    { "type": "text"  },
-        "job_id":     { "type": "text"  },
+        "client_id":    { "type": "keyword"  },
+        "job_id":     { "type": "keyword"  },
         "name":      { "type": "text" },
-        "type":    { "type": "text"  },
+        "type":    { "type": "keyword"  },
         "desc":     { "type": "text" },
         "source":      {  "type": "geo_point" },
         "dest":    { "type": "geo_point"  },
         "devices":     { "type": "object"  },
-        "status":      { "type": "text" } ,
-        "start_time":      { "type": "date" }
+        "status":      { "type": "keyword" } ,
+        "start_time":      { "type": "date" },
         "end_time":      { "type": "date" }
       }
     }

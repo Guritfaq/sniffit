@@ -81,7 +81,7 @@ else
 
 }
 
-function ReadFromEs(searchtext,index, context) {
+function ReadFromEs(searchparam,index, context) {
       var myCredentials = new AWS.EnvironmentCredentials('AWS');
   var es = elasticsearch.Client({
         hosts: esDomain.endpoint,
@@ -93,8 +93,7 @@ function ReadFromEs(searchtext,index, context) {
       });
     es.search({
           index: index,
-        //  type: 'client_id',
-          q: searchtext
+          body : searchparam
         }, function (error, response) {
           // es.search({
           //   index: 'sensor_data',
