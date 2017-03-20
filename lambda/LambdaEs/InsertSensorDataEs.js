@@ -1,33 +1,25 @@
 'use strict';
 var AWS = require('aws-sdk');
 var common = require('./EsCommon.js');
+var insertviolation = require('./InsertViolation.js');
+var Thingsee = require('../Thingsee.js');
 var docClient = new AWS.DynamoDB.DocumentClient();
 var table = 'sensor_data'
 
-var temp ;
-var lat ;
-var long ;
-var humidity;
-var pressure;
-var speed;
+
 var device_id ;
-var timestamp ;
-var battery ;
 var dynamodb = new AWS.DynamoDB();
 var client_id ;
 var device_id ;
-var job_id = "J009";
+var job_id = "J002";
 var id ;
-
+var sensordata;
 exports.handler = (event, context) => {
 console.log(event);
-
-traverse(event);
-
+sensordata = Thingsee.parsethingsee(event.body);
 var hardware_vendor = "TNGS1";
-var vendor_device_id = event.Deviceauthuuid; //"1234567890";
+var vendor_device_id = event.Deviceauthuuid;
 console.log(vendor_device_id);
-//timestamp = new Date().getTime().toString();
 GetClient_Device_Map(vendor_device_id,hardware_vendor,context);
 
 }
@@ -77,25 +69,22 @@ function GetClient_Device_Map(vendor_device_id,hardware_vendor,context)
               data.Items.forEach(function(item) {
               client_id = item.client_id;
               device_id = item.device_uid;
-              console.log(timestamp);
-              var ts = new Date().toISOString();
-              console.log(ts);
+              var ts = new Date(sensordata.timestamp).toISOString();
               id = client_id + job_id + device_id + ts;
               console.log('id ' + id);
               var paramsES = {
                               "client_id":  client_id,
-                            //  "client_id_job_id_device_id":  "C001J001D001" ,  //event.client_id_job_id_device_id,
-                              "job_id":  "J002",
+                              "job_id":  job_id,
                               "device_id":  device_id,
-                              "read_time":  ts,
-                              "location":  lat + ',' + long ,
-                              "temp":  temp,
-                              "battery":  battery,
-                              "speed": speed,
-                              "humidity":  humidity
+                              "read_time": ts,
+                              "temp":  sensordata.temp,
+                              "battery":  sensordata.battery,
+                              "speed": sensordata.speed,
+                              "humidity":  sensordata.humidity,
+                              "location":  sensordata.lat + ',' + sensordata.long,
                           };
-                      paramsES =  JSON.stringify(paramsES, null, 2);
-                      console.log('paramsES ' + paramsES);
+                      console.log('paramsES ' + JSON.stringify(paramsES));
+                      insertviolation.violation("T001",paramsES);
                       common.SendToEs('sniffitindex','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
 
             });
@@ -104,57 +93,6 @@ function GetClient_Device_Map(vendor_device_id,hardware_vendor,context)
  }
 
 
-function traverse(o) {
-
-    for (var i in o)
-{
-        if (o[i] !== null && typeof(o[i])=="object")
-{
-              if (i== "engine")
-              {
-                  var engine = o[i];
-                  for (var j in engine)
-                  {
-                    if  (j == "ts")
-                    {
-                    timestamp = engine[j];
-                    console.log(timestamp);
-                    break;
-                    }
-                  }
-              }
-         if (i== "senses")
-              {
-                  var senses = o[i];
-                  for (var j in senses)
-                  {
-                      var sense = senses[j];
-switch(sense.sId) {
-    case "0x00060100":
-        temp = sense.val;
-        break;
-    case "0x00010100":
-        lat =  sense.val;
-        break;
-    case "0x00010200":
-        long =  sense.val;
-        break;
-    case "0x00020100":
-        speed =  sense.val;
-        break;
-    case "0x00030200":
-        battery =  sense.val;
-        break;
-    case "0x00060200":
-        humidity =  sense.val;
-        break;
-}
-              }
-        }
-            traverse(o[i]);
-    }
-}
-}
 var sensor_datamapping = {"mappings": {
     "sensor_data": {
       //"_all":       { "enabled": false  },

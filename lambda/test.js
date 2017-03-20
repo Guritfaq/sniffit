@@ -77,16 +77,22 @@ console.log(datetime);
   // 				}};
   //   console.log(searchparam);
 
-abc('event','context');
+//abc('event','context');
 
 function abc (event, context) {
   console.log('before createjob');
-  createjob(event, context,createjobcallback(event,context));
+  createjob(event, context);
   console.log('after createjob');
 
   }
 
-  function createjob(event, context,createjobcallback)
+
+      exports.abcd = abcd;
+
+      function abcd()
+      { return "abcde";}
+
+  function createjob(event, context)
   {
     sleep.sleep(2);
     console.log('inside createjob');
