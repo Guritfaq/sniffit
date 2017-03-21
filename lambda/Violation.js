@@ -1,38 +1,53 @@
 var AWS = require('aws-sdk');
-var common = require('./EsCommon.js');
 var converter = require('aws-sdk/lib/dynamodb/converter.js');
 var https = require('https');
 var DateDiff = require('date-diff');
 var docClient = new AWS.DynamoDB.DocumentClient();
 var dynamodb = new AWS.DynamoDB();
 var table = 'violation';
-var violationJSON;
+var violationJSON = {}; // empty Object
+var key = 'violations';
+violationJSON[key] = [];
 
-
-function checkviolation(paramsES,threshholds)
+function addviolation(paramsES,threshholds)
 {
 if (threshholds.temp != undefined && threshholds.temp.enabled ==  true)
   if ((paramsES.temp != undefined) && (paramsES.temp <= threshholds.temp.min ||  paramsES.temp >= threshholds.temp.max))
     {
-      console.log('high temp');
+      var data = {
+          type : 'temp',
+          value: paramsES.temp
+      };
+      violationJSON[key].push(data);
     }
   if (threshholds.humidity != undefined && threshholds.humidity.enabled ==  true)
     if ((paramsES.humidity != undefined) && (paramsES.humidity <= threshholds.humidity.min ||  paramsES.humidity >= threshholds.humidity.max))
     {
-    console.log('high humidity');
+      var data = {
+          type : 'humidity',
+          value: paramsES.humidity
+      };
+      violationJSON[key].push(data);
     }
     if (threshholds.pressure != undefined && threshholds.pressure.enabled ==  true)
       if ((paramsES.pressure != undefined) && (paramsES.pressure <= threshholds.pressure.min ||  paramsES.pressure >= threshholds.pressure.max))
       {
-      console.log('high humidity');
+        var data = {
+            type : 'pressure',
+            value: paramsES.pressure
+        };
+        violationJSON[key].push(data);
       }
-
       if (threshholds.battery != undefined && threshholds.battery.enabled ==  true)
         if ((paramsES.battery != undefined) && (paramsES.battery <= threshholds.battery.min))
         {
-        console.log('low battery');
+          var data = {
+              type : 'battery',
+              value: paramsES.battery
+          };
+          violationJSON[key].push(data);
         }
-
+  //  any other parameters add here.
     if (threshholds.dest != undefined && threshholds.source != undefined && threshholds.start_time != undefined && threshholds.end_time != undefined)
       if (paramsES.location != undefined)
       {
@@ -41,13 +56,12 @@ if (threshholds.temp != undefined && threshholds.temp.enabled ==  true)
         unit = "imperial";
         else
         unit = "metric";
-      //  var expectedarrival =   finddesttime(paramsES.location , threshholds.dest.lat + "," + threshholds.dest.long ,unit, paramsES.read_time);
-        //console.log(expectedarrival);
+        console.log(paramsES.read_time);
+        estimatedesttime(paramsES.location , threshholds.dest.lat + "," + threshholds.dest.long ,unit, paramsES.read_time,paramsES);
       }
 }
-function finddesttime(loc , dest , unit,end_time)
+function estimatedesttime(loc , dest , unit,end_time,paramsES)
 {
-var response;
   var optionsget = {
     hostname: 'maps.googleapis.com',
     port: 443,
@@ -57,7 +71,20 @@ var response;
   };
   var reqGet = https.request(optionsget, function(res) {
       res.on('data', function(d) {
-        response =  process.stdout.write(d);
+      var output = JSON.parse(d);
+      console.log(JSON.stringify(output));
+      var response = parsegoogleres(output,end_time);
+      console.log(JSON.stringify(response));
+      if (response.diff > 0)
+      {
+        var data = {
+            type : 'delay',
+            value: response.diff
+        };
+        violationJSON[key].push(data);
+      }
+      console.log(JSON.stringify(violationJSON));
+      insertviolationindynamo(paramsES,violationJSON);
       });
   });
 
@@ -66,13 +93,20 @@ var response;
       console.error(e);
   });
 
-  // var dist = response.rows[0].elements[0].distance.text;
-  // var time = response.rows[0].elements[0].duration.text;
-  // var timesec = response.rows[0].elements[0].duration.value;
-  // var parsedDate = new Date(Date.parse(end_time));
-  // var newexpectedarrival = new Date(parsedDate.getTime() + (1000 * timesec));
-  // var diff = new DateDiff(parsedDate, newexpectedarrival);
-  // console.log(diff);
+}
+
+function parsegoogleres(response,end_time){
+  var dist = response.rows[0].elements[0].distance.text;
+  var time = response.rows[0].elements[0].duration.text;
+  var timesec = response.rows[0].elements[0].duration.value;
+  console.log(end_time);
+  var parsedDate = new Date(Date.parse(end_time));
+  console.log(parsedDate);
+  console.log(timesec);
+  var newexpectedarrival = new Date(parsedDate+ (1000 * timesec));
+    console.log(newexpectedarrival);
+  var diff = new DateDiff(parsedDate, newexpectedarrival);
+  console.log(diff);
   // // diff.years(); // ===> 1.9
   // // diff.months(); // ===> 23
   // diff.days(); // ===> 699
@@ -81,29 +115,26 @@ var response;
   // diff.minutes(); // ===> 1006560
   // diff.seconds(); // ===> 60393600
 
-// return {
-//       "newexpectedarrival" : newexpectedarrival,
-//       "dist" : dist,
-//       "timetodest" : time,
-//       "diffexpectedarrival" : diff
-//   }
+return {
+      "newexpectedarrival" : newexpectedarrival,
+      "dist" : dist,
+      "timetodest" : time,
+      "diff" : diff.difference
+  }
 }
-
-  function violation(template_id,paramsES)
+  function checkviolation(template_id,paramsES)
   {
-     console.log(JSON.stringify(paramsES));
      getthreshholds(template_id,paramsES);
-
   }
 
- function insertviolation(paramsES,violationJSON)
+ function insertviolationindynamo(paramsES,violationJSON)
   {
 
     var params = {
                "TableName": "violation",
                "Item": {
-                 "client_id_job_id_device_id_read_time": {
-                     "S": paramsES.client_id + paramsES.job_id + paramsES.device_id + paramsES.read_time
+                 "client_id_job_id_device_id": {
+                     "S": paramsES.client_id + paramsES.job_id + paramsES.device_id
                    },
                    "client_id": {
                        "S": paramsES.client_id
@@ -119,13 +150,14 @@ var response;
                    },
                    "status": {
                        "S":  "new"
+                   },
+                   "violations": {
+                       "M":  violationJSON
                    }
                }
            };
            console.log('insertviolation params');
            console.log(params);
-
-
     dynamodb.putItem(params, function(err, data) {
                if (err) {
                   console.log(err);
@@ -134,7 +166,6 @@ var response;
                }
            });
   }
-
 function getthreshholds(template_id,paramsES)
 {
   var params = {
@@ -183,9 +214,8 @@ function getthreshholds(template_id,paramsES)
                         "temp_unit" : data.Responses.job_template[0].temp_unit
                       };
                       console.log(JSON.stringify(threshholds));
-                      checkviolation(paramsES,threshholds);
-                      insertviolation(paramsES,violationJSON);
+                      addviolation(paramsES,threshholds);
               }
           });
 }
- exports.violation = violation;
+ exports.checkviolation = checkviolation;

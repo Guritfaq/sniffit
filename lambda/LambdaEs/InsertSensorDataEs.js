@@ -1,7 +1,7 @@
 'use strict';
 var AWS = require('aws-sdk');
 var common = require('./EsCommon.js');
-var insertviolation = require('./InsertViolation.js');
+var violation = require('../Violation.js');
 var Thingsee = require('../Thingsee.js');
 var docClient = new AWS.DynamoDB.DocumentClient();
 var table = 'sensor_data'
@@ -84,8 +84,8 @@ function GetClient_Device_Map(vendor_device_id,hardware_vendor,context)
                               "location":  sensordata.lat + ',' + sensordata.long,
                           };
                       console.log('paramsES ' + JSON.stringify(paramsES));
-                      insertviolation.violation("T001",paramsES);
-                      common.SendToEs('sniffitindex','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
+                      violation.checkviolation("T001",paramsES);
+                  //    common.SendToEs('sniffitindex','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
 
             });
       }
