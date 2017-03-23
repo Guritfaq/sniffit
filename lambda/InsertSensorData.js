@@ -1,5 +1,8 @@
 console.log('Loading event');
 var AWS = require('aws-sdk');
+var violation = require('../Violation.js');
+var converter = require('aws-sdk/lib/dynamodb/converter.js');
+
 var dynamodb = new AWS.DynamoDB();
 var docClient = new AWS.DynamoDB.DocumentClient();
 
@@ -127,9 +130,7 @@ console.log(device_id);
             }
  });
 
-
-var tableName = "sensor_data";
-dynamodb.putItem({
+var paramsensordata = {
             "TableName": tableName,
             "Item": {
               "client_id": {
@@ -163,12 +164,17 @@ dynamodb.putItem({
                   "N": humidity
               }
             }
-        }, function(err, data) {
+        };
+var tableName = "sensor_data";
+dynamodb.putItem(, function(err, data) {
             if (err) {
                 context.fail('ERROR: Dynamo failed: ' + err);
             } else {
                 console.log('Dynamo Success: ' + JSON.stringify(data, null, '  '));
+                var outpt = converter.output(paramsensordata);
+                violation.checkviolation("T001",outpt);
                 context.succeed('SUCCESS');
             }
         });
+
 }

@@ -6,46 +6,36 @@ var docClient = new AWS.DynamoDB.DocumentClient();
 var dynamodb = new AWS.DynamoDB();
 var table = 'violation';
 var violationJSON = {}; // empty Object
-var key = 'violations';
-violationJSON[key] = [];
+// var key = 'L';
+// violationJSON[key] = [];
 
 function addviolation(paramsES,threshholds)
 {
-if (threshholds.temp != undefined && threshholds.temp.enabled ==  true)
+
+if (threshholds.temp != undefined && threshholds.temp.enable ==  true)
   if ((paramsES.temp != undefined) && (paramsES.temp <= threshholds.temp.min ||  paramsES.temp >= threshholds.temp.max))
     {
-      var data = {
-          type : 'temp',
-          value: paramsES.temp
-      };
-      violationJSON[key].push(data);
+      // var data = {
+      //     "type" : {"S":'temp'},
+      //     "value": {"S":paramsES.temp}
+      // };
+      // violationJSON[key].push(data);
+      violationJSON.temp = {"S" : paramsES.temp.toString()};
     }
-  if (threshholds.humidity != undefined && threshholds.humidity.enabled ==  true)
+  if (threshholds.humidity != undefined && threshholds.humidity.enable ==  true)
     if ((paramsES.humidity != undefined) && (paramsES.humidity <= threshholds.humidity.min ||  paramsES.humidity >= threshholds.humidity.max))
     {
-      var data = {
-          type : 'humidity',
-          value: paramsES.humidity
-      };
-      violationJSON[key].push(data);
+            violationJSON.humidity = {"S" : paramsES.humidity.toString()};
     }
-    if (threshholds.pressure != undefined && threshholds.pressure.enabled ==  true)
+    if (threshholds.pressure != undefined && threshholds.pressure.enable ==  true)
       if ((paramsES.pressure != undefined) && (paramsES.pressure <= threshholds.pressure.min ||  paramsES.pressure >= threshholds.pressure.max))
       {
-        var data = {
-            type : 'pressure',
-            value: paramsES.pressure
-        };
-        violationJSON[key].push(data);
+        violationJSON.pressure = {"S" : paramsES.pressure.toString()};
       }
-      if (threshholds.battery != undefined && threshholds.battery.enabled ==  true)
+      if (threshholds.battery != undefined && threshholds.battery.enable ==  true)
         if ((paramsES.battery != undefined) && (paramsES.battery <= threshholds.battery.min))
         {
-          var data = {
-              type : 'battery',
-              value: paramsES.battery
-          };
-          violationJSON[key].push(data);
+          violationJSON.battery = {"S" : paramsES.battery.toString()};
         }
   //  any other parameters add here.
     if (threshholds.dest != undefined && threshholds.source != undefined && threshholds.start_time != undefined && threshholds.end_time != undefined)
@@ -77,11 +67,7 @@ function estimatedesttime(loc , dest , unit,end_time,paramsES)
       console.log(JSON.stringify(response));
       if (response.diff > 0)
       {
-        var data = {
-            type : 'delay',
-            value: response.diff
-        };
-        violationJSON[key].push(data);
+        violationJSON.delay = {"S" :response.diff.toString()};
       }
       console.log(JSON.stringify(violationJSON));
       insertviolationindynamo(paramsES,violationJSON);
@@ -152,12 +138,12 @@ return {
                        "S":  "new"
                    },
                    "violations": {
-                       "M":  violationJSON
+                       "M": violationJSON
+                     }
                    }
-               }
-           };
+               };
            console.log('insertviolation params');
-           console.log(params);
+           console.log(JSON.stringify(params));
     dynamodb.putItem(params, function(err, data) {
                if (err) {
                   console.log(err);

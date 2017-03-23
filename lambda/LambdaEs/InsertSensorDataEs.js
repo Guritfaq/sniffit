@@ -85,7 +85,7 @@ function GetClient_Device_Map(vendor_device_id,hardware_vendor,context)
                           };
                       console.log('paramsES ' + JSON.stringify(paramsES));
                       violation.checkviolation("T001",paramsES);
-                  //    common.SendToEs('sniffitindex','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
+                     common.SendToEs('sniffitindex','sensor_reading',sensor_datamapping,paramsES,id,"INSERT",context);
 
             });
       }
